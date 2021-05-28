@@ -21,7 +21,7 @@ namespace JokeGenerator
 
             while (true)
             {
-                ConsoleHelper.DisplayOptions();
+                ConsoleHelper.DisplayInstructions();
 
                 var key = Console.ReadKey().ToChar();
                 switch (key)

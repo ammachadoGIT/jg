@@ -5,7 +5,7 @@ namespace JokeGenerator.Helpers
 {
     public static class ConsoleHelper
     {
-        public static void DisplayOptions()
+        public static void DisplayInstructions()
         {
             Console.Clear();
             Console.WriteLine("Press c to get categories");
