@@ -7,9 +7,8 @@ namespace JokeGenerator
 {
     class JsonFeed
     {
-        static string _url = "";
+        static string _url = string.Empty;
 
-        public JsonFeed() { }
         public JsonFeed(string endpoint, int results)
         {
             _url = endpoint;
@@ -17,14 +16,19 @@ namespace JokeGenerator
 
         public static string[] GetRandomJokes(string firstname, string lastname, string category)
         {
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(_url);
+            var client = new HttpClient { BaseAddress = new Uri(_url) };
             var url = "jokes/random";
             if (category != null)
             {
                 if (url.Contains('?'))
+                {
                     url += "&";
-                else url += "?";
+                }
+                else
+                {
+                    url += "?";
+                }
+
                 url += "category=";
                 url += category;
             }
@@ -45,20 +49,17 @@ namespace JokeGenerator
         /// <summary>
         /// returns an object that contains name and surname
         /// </summary>
-        /// <param name="client2"></param>
         /// <returns></returns>
         public static dynamic GetNames()
         {
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(_url);
-            var result = client.GetStringAsync("").Result;
+            var client = new HttpClient { BaseAddress = new Uri(_url) };
+            var result = client.GetStringAsync(string.Empty).Result;
             return JsonConvert.DeserializeObject<dynamic>(result);
         }
 
         public static string[] GetCategories()
         {
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(_url);
+            var client = new HttpClient { BaseAddress = new Uri(_url) };
 
             return new string[] { Task.FromResult(client.GetStringAsync("categories").Result).Result };
         }
