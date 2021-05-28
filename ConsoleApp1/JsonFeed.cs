@@ -17,9 +17,9 @@ namespace ConsoleApp1
 
         public static string[] GetRandomJokes(string firstname, string lastname, string category)
         {
-            HttpClient client = new HttpClient();
+            var client = new HttpClient();
             client.BaseAddress = new Uri(_url);
-            string url = "jokes/random";
+            var url = "jokes/random";
             if (category != null)
             {
                 if (url.Contains('?'))
@@ -29,13 +29,13 @@ namespace ConsoleApp1
                 url += category;
             }
 
-            string joke = Task.FromResult(client.GetStringAsync(url).Result).Result;
+            var joke = Task.FromResult(client.GetStringAsync(url).Result).Result;
 
             if (firstname != null && lastname != null)
             {
-                int index = joke.IndexOf("Chuck Norris");
-                string firstPart = joke.Substring(0, index);
-                string secondPart = joke.Substring(0 + index + "Chuck Norris".Length, joke.Length - (index + "Chuck Norris".Length));
+                var index = joke.IndexOf("Chuck Norris");
+                var firstPart = joke.Substring(0, index);
+                var secondPart = joke.Substring(0 + index + "Chuck Norris".Length, joke.Length - (index + "Chuck Norris".Length));
                 joke = firstPart + " " + firstname + " " + lastname + secondPart;
             }
 
@@ -49,7 +49,7 @@ namespace ConsoleApp1
         /// <returns></returns>
 		public static dynamic Getnames()
         {
-            HttpClient client = new HttpClient();
+            var client = new HttpClient();
             client.BaseAddress = new Uri(_url);
             var result = client.GetStringAsync("").Result;
             return JsonConvert.DeserializeObject<dynamic>(result);
@@ -57,7 +57,7 @@ namespace ConsoleApp1
 
         public static string[] GetCategories()
         {
-            HttpClient client = new HttpClient();
+            var client = new HttpClient();
             client.BaseAddress = new Uri(_url);
 
             return new string[] { Task.FromResult(client.GetStringAsync("categories").Result).Result };

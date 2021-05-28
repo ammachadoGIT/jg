@@ -34,7 +34,7 @@ namespace ConsoleApp1
                         if (key == 'y')
                         {
                             printer.Value("How many jokes do you want? (1-9)").ToString();
-                            int n = Int32.Parse(Console.ReadLine());
+                            var n = Int32.Parse(Console.ReadLine());
                             printer.Value("Enter a category;").ToString();
                             GetRandomJokes(Console.ReadLine(), n);
                             PrintResults();
@@ -42,7 +42,7 @@ namespace ConsoleApp1
                         else
                         {
                             printer.Value("How many jokes do you want? (1-9)").ToString();
-                            int n = Int32.Parse(Console.ReadLine());
+                            var n = Int32.Parse(Console.ReadLine());
                             GetRandomJokes(null, n);
                             PrintResults();
                         }
@@ -116,7 +116,7 @@ namespace ConsoleApp1
         private static void GetNames()
         {
             new JsonFeed("https://www.names.privserv.com/api/", 0);
-            dynamic result = JsonFeed.Getnames();
+            var result = JsonFeed.Getnames();
             names = Tuple.Create(result.name.ToString(), result.surname.ToString());
         }
     }
