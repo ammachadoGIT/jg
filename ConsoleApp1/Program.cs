@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ConsoleApp1
+namespace JokeGenerator
 {
     class Program
     {
@@ -116,7 +116,7 @@ namespace ConsoleApp1
         private static void GetNames()
         {
             new JsonFeed("https://www.names.privserv.com/api/", 0);
-            var result = JsonFeed.Getnames();
+            var result = JsonFeed.GetNames();
             names = Tuple.Create(result.name.ToString(), result.surname.ToString());
         }
     }

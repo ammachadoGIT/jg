@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace ConsoleApp1
+namespace JokeGenerator
 {
     class JsonFeed
     {
@@ -47,7 +47,7 @@ namespace ConsoleApp1
         /// </summary>
         /// <param name="client2"></param>
         /// <returns></returns>
-		public static dynamic Getnames()
+        public static dynamic GetNames()
         {
             var client = new HttpClient();
             client.BaseAddress = new Uri(_url);
