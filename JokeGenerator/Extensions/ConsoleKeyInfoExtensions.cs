@@ -22,6 +22,15 @@ namespace JokeGenerator.Extensions
                 ConsoleKey.Y => 'y',
                 ConsoleKey.N => 'n',
                 ConsoleKey.Q => 'q',
+                ConsoleKey.NumPad1 => '1',
+                ConsoleKey.NumPad2 => '2',
+                ConsoleKey.NumPad3 => '3',
+                ConsoleKey.NumPad4 => '4',
+                ConsoleKey.NumPad5 => '5',
+                ConsoleKey.NumPad6 => '6',
+                ConsoleKey.NumPad7 => '7',
+                ConsoleKey.NumPad8 => '8',
+                ConsoleKey.NumPad9 => '9',
                 _ => null
             };
         }

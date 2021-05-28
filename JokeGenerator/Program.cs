@@ -14,6 +14,8 @@ namespace JokeGenerator
     {
         private static IJsonFeed chuckNorrisJsonFeed;
         private static IJsonFeed namesJsonFeed;
+        
+        private static Func<char?, bool> YnKeyFunc => key => key == 'n' || key == 'y';
 
         public static async Task Main()
         {
@@ -58,9 +60,7 @@ namespace JokeGenerator
 
         private static async Task<string> GetCategoryAsync()
         {
-            Console.WriteLine("\nWant to specify a category? y/N");
-
-            var key = Console.ReadKey().ToChar();
+            var key = ConsoleHelper.ReadUntilKey("\nWant to specify a category? y/n", YnKeyFunc);
             if (key != 'y')
             {
                 return null;
@@ -70,15 +70,7 @@ namespace JokeGenerator
             Console.WriteLine();
             var categories = await ListCategoriesAsync(false);
 
-            Console.WriteLine("Enter a category: ");
-            var category = Console.ReadLine();
-
-            if (!categories.Contains(category))
-            {
-                Console.WriteLine("\nInvalid value. No category will be selected.");
-                category = null;
-            }
-
+            var category = ConsoleHelper.ReadUntilListContains("Enter a category: ", categories);
             return category;
         }
 
@@ -93,10 +85,8 @@ namespace JokeGenerator
         private static async Task<Name> GetRandomNameAsync()
         {
             Name name = null;
-
-            Console.WriteLine("\nWant to use a random name? y/N");
-
-            var key = Console.ReadKey().ToChar();
+            
+            var key = ConsoleHelper.ReadUntilKey("\nWant to use a random name? y/n", YnKeyFunc);
             if (key == 'y')
             {
                 name = await namesJsonFeed.GetRandomNameAsync();
@@ -107,18 +97,11 @@ namespace JokeGenerator
 
         private static async Task ListRandomJokesAsync(Name name, string category)
         {
-            Console.WriteLine("\nHow many jokes do you want? (1-9)");
-
-            if (!int.TryParse(Console.ReadLine(), out var jokesCount) || jokesCount < 1 || jokesCount > 9)
-            {
-                Console.WriteLine("\nInvalid value. You will get 1 joke.");
-                ConsoleHelper.WaitForAnyKey();
-
-                jokesCount = 1;
-            }
-
+            var jokesCount = ConsoleHelper.ReadUntilInt("\nHow many jokes do you want? (1-9)", BetweenOneAndNine);
             var jokes = await chuckNorrisJsonFeed.GetRandomJokes(name, category, jokesCount);
             ConsoleHelper.PrintResults(true, "Joke(s)", jokes.Select(joke => joke.Value));
+
+            static bool BetweenOneAndNine(int i) => i >= 1 && i <= 9;
         }
     }
 }
