@@ -1,127 +1,124 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using JokeGenerator.Extensions;
+using JokeGenerator.Helpers;
+using JokeGenerator.Models;
+using JokeGenerator.Services;
 
 namespace JokeGenerator
 {
     public static class Program
     {
-        private static readonly JsonFeed ChuckNorrisJsonFeed = new JsonFeed("https://api.chucknorris.io");
+        private static IJsonFeed chuckNorrisJsonFeed;
+        private static IJsonFeed namesJsonFeed;
 
         public static async Task Main()
         {
-            ConsolePrinter.PrintValue("Press ? to get instructions.");
-            if (Console.ReadLine() == "?")
+            InitializeServices();
+
+            while (true)
             {
-                while (true)
+                ConsoleHelper.DisplayOptions();
+
+                var key = Console.ReadKey().ToChar();
+                switch (key)
                 {
-                    Tuple<string, string> names = null;
-
-                    ConsolePrinter.PrintValue("Press c to get categories");
-                    ConsolePrinter.PrintValue("Press r to get random jokes");
-                    var key = GetEnteredKey(Console.ReadKey());
-                    if (key == 'c')
-                    {
-                        var categories = await GetCategories();
-                        PrintResults(categories);
-                    }
-
-                    if (key == 'r')
-                    {
-                        ConsolePrinter.PrintValue("Want to use a random name? y/n");
-                        key = GetEnteredKey(Console.ReadKey());
-                        if (key == 'y')
+                    case 'c':
+                        await ListCategoriesAsync(true);
+                        break;
+                    case 'r':
                         {
-                            names = await GetRandomName();
+                            var randomName = await GetRandomNameAsync();
+                            var category = await GetCategoryAsync();
+                            await ListRandomJokesAsync(randomName, category);
+                            break;
                         }
-
-                        ConsolePrinter.PrintValue("Want to specify a category? y/n");
-                        if (key == 'y')
-                        {
-                            ConsolePrinter.PrintValue("How many jokes do you want? (1-9)");
-                            var n = int.Parse(Console.ReadLine());
-                            ConsolePrinter.PrintValue("Enter a category;");
-                            var jokes = await GetRandomJokes(names, Console.ReadLine(), n);
-                            PrintResults(jokes);
-                        }
-                        else
-                        {
-                            ConsolePrinter.PrintValue("How many jokes do you want? (1-9)");
-                            var n = int.Parse(Console.ReadLine());
-                            var jokes = await GetRandomJokes(names, null, n);
-                            PrintResults(jokes);
-                        }
-                    }
+                    case 'q':
+                        return;
+                    default:
+                        continue;
                 }
+
+                ConsoleHelper.WaitForAnyKey();
             }
         }
 
-        private static void PrintResults(string[] results)
+        private static void InitializeServices()
         {
-            ConsolePrinter.PrintValue("[" + string.Join(",", results) + "]");
+            var chuckNorrisHttpClient = new HttpClient { BaseAddress = new Uri("https://api.chucknorris.io") };
+            var namesHttpClient = new HttpClient { BaseAddress = new Uri("https://www.names.privserv.com/api") };
+
+            // TODO: ideally, these services should be initialized via Dependency Injection
+            chuckNorrisJsonFeed = new JsonFeed(chuckNorrisHttpClient);
+            namesJsonFeed = new JsonFeed(namesHttpClient);
         }
 
-        private static char? GetEnteredKey(ConsoleKeyInfo consoleKeyInfo)
+        private static async Task<string> GetCategoryAsync()
         {
-            char? key = null;
+            Console.WriteLine("\nWant to specify a category? y/N");
 
-            switch (consoleKeyInfo.Key)
+            var key = Console.ReadKey().ToChar();
+            if (key != 'y')
             {
-                case ConsoleKey.C:
-                    key = 'c';
-                    break;
-                case ConsoleKey.D0:
-                    key = '0';
-                    break;
-                case ConsoleKey.D1:
-                    key = '1';
-                    break;
-                case ConsoleKey.D3:
-                    key = '3';
-                    break;
-                case ConsoleKey.D4:
-                    key = '4';
-                    break;
-                case ConsoleKey.D5:
-                    key = '5';
-                    break;
-                case ConsoleKey.D6:
-                    key = '6';
-                    break;
-                case ConsoleKey.D7:
-                    key = '7';
-                    break;
-                case ConsoleKey.D8:
-                    key = '8';
-                    break;
-                case ConsoleKey.D9:
-                    key = '9';
-                    break;
-                case ConsoleKey.R:
-                    key = 'r';
-                    break;
-                case ConsoleKey.Y:
-                    key = 'y';
-                    break;
+                return null;
             }
 
-            return key;
+            Console.WriteLine();
+            Console.WriteLine();
+            var categories = await ListCategoriesAsync(false);
+
+            Console.WriteLine("Enter a category: ");
+            var category = Console.ReadLine();
+
+            if (!categories.Contains(category))
+            {
+                Console.WriteLine("\nInvalid value. No category will be selected.");
+                category = null;
+            }
+
+            return category;
         }
 
-        private static Task<string[]> GetRandomJokes(Tuple<string, string> names, string category, int number)
+        private static async Task<IEnumerable<string>> ListCategoriesAsync(bool shouldClearConsole)
         {
-            return ChuckNorrisJsonFeed.GetRandomJokes(names?.Item1, names?.Item2, category, number);
+            var categories = await chuckNorrisJsonFeed.GetCategoriesAsync();
+            ConsoleHelper.PrintResults(shouldClearConsole, "Categories", categories);
+
+            return categories;
         }
 
-        private static Task<string[]> GetCategories()
+        private static async Task<Name> GetRandomNameAsync()
         {
-            return ChuckNorrisJsonFeed.GetCategoriesAsync();
+            Name name = null;
+
+            Console.WriteLine("\nWant to use a random name? y/N");
+
+            var key = Console.ReadKey().ToChar();
+            if (key == 'y')
+            {
+                name = await namesJsonFeed.GetRandomNameAsync();
+            }
+
+            return name;
         }
 
-        private static async Task<dynamic> GetRandomName()
+        private static async Task ListRandomJokesAsync(Name name, string category)
         {
-            var jsonFeed = new JsonFeed("https://www.names.privserv.com/api/");
-            var result = await jsonFeed.GetNames();
-            return Tuple.Create(result.name.ToString(), result.surname.ToString());
+            Console.WriteLine("\nHow many jokes do you want? (1-9)");
+
+            if (!int.TryParse(Console.ReadLine(), out var jokesCount) || jokesCount < 1 || jokesCount > 9)
+            {
+                Console.WriteLine("\nInvalid value. You will get 1 joke.");
+                ConsoleHelper.WaitForAnyKey();
+
+                jokesCount = 1;
+            }
+
+            var jokes = await chuckNorrisJsonFeed.GetRandomJokes(name, category, jokesCount);
+            ConsoleHelper.PrintResults(true, "Joke(s)", jokes.Select(joke => joke.Value));
         }
     }
 }
