@@ -1,65 +1,69 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace JokeGenerator
 {
-    class Program
+    public static class Program
     {
-        static string[] results = new string[50];
-        static char key;
-        static Tuple<string, string> names;
-        static ConsolePrinter printer = new ConsolePrinter();
+        private static readonly JsonFeed ChuckNorrisJsonFeed = new JsonFeed("https://api.chucknorris.io");
 
-        static void Main(string[] args)
+        public static async Task Main()
         {
-            printer.Value("Press ? to get instructions.").ToString();
+            ConsolePrinter.PrintValue("Press ? to get instructions.");
             if (Console.ReadLine() == "?")
             {
                 while (true)
                 {
-                    printer.Value("Press c to get categories").ToString();
-                    printer.Value("Press r to get random jokes").ToString();
-                    GetEnteredKey(Console.ReadKey());
+                    Tuple<string, string> names = null;
+
+                    ConsolePrinter.PrintValue("Press c to get categories");
+                    ConsolePrinter.PrintValue("Press r to get random jokes");
+                    var key = GetEnteredKey(Console.ReadKey());
                     if (key == 'c')
                     {
-                        getCategories();
-                        PrintResults();
+                        var categories = await GetCategories();
+                        PrintResults(categories);
                     }
+
                     if (key == 'r')
                     {
-                        printer.Value("Want to use a random name? y/n").ToString();
-                        GetEnteredKey(Console.ReadKey());
-                        if (key == 'y')
-                            GetNames();
-                        printer.Value("Want to specify a category? y/n").ToString();
+                        ConsolePrinter.PrintValue("Want to use a random name? y/n");
+                        key = GetEnteredKey(Console.ReadKey());
                         if (key == 'y')
                         {
-                            printer.Value("How many jokes do you want? (1-9)").ToString();
-                            var n = Int32.Parse(Console.ReadLine());
-                            printer.Value("Enter a category;").ToString();
-                            GetRandomJokes(Console.ReadLine(), n);
-                            PrintResults();
+                            names = await GetRandomName();
+                        }
+
+                        ConsolePrinter.PrintValue("Want to specify a category? y/n");
+                        if (key == 'y')
+                        {
+                            ConsolePrinter.PrintValue("How many jokes do you want? (1-9)");
+                            var n = int.Parse(Console.ReadLine());
+                            ConsolePrinter.PrintValue("Enter a category;");
+                            var jokes = await GetRandomJokes(names, Console.ReadLine(), n);
+                            PrintResults(jokes);
                         }
                         else
                         {
-                            printer.Value("How many jokes do you want? (1-9)").ToString();
-                            var n = Int32.Parse(Console.ReadLine());
-                            GetRandomJokes(null, n);
-                            PrintResults();
+                            ConsolePrinter.PrintValue("How many jokes do you want? (1-9)");
+                            var n = int.Parse(Console.ReadLine());
+                            var jokes = await GetRandomJokes(names, null, n);
+                            PrintResults(jokes);
                         }
                     }
-                    names = null;
                 }
             }
-
         }
 
-        private static void PrintResults()
+        private static void PrintResults(string[] results)
         {
-            printer.Value("[" + string.Join(",", results) + "]").ToString();
+            ConsolePrinter.PrintValue("[" + string.Join(",", results) + "]");
         }
 
-        private static void GetEnteredKey(ConsoleKeyInfo consoleKeyInfo)
+        private static char? GetEnteredKey(ConsoleKeyInfo consoleKeyInfo)
         {
+            char? key = null;
+
             switch (consoleKeyInfo.Key)
             {
                 case ConsoleKey.C:
@@ -99,25 +103,25 @@ namespace JokeGenerator
                     key = 'y';
                     break;
             }
+
+            return key;
         }
 
-        private static void GetRandomJokes(string category, int number)
+        private static Task<string[]> GetRandomJokes(Tuple<string, string> names, string category, int number)
         {
-            new JsonFeed("https://api.chucknorris.io", number);
-            results = JsonFeed.GetRandomJokes(names?.Item1, names?.Item2, category);
+            return ChuckNorrisJsonFeed.GetRandomJokes(names?.Item1, names?.Item2, category, number);
         }
 
-        private static void getCategories()
+        private static Task<string[]> GetCategories()
         {
-            new JsonFeed("https://api.chucknorris.io", 0);
-            results = JsonFeed.GetCategories();
+            return ChuckNorrisJsonFeed.GetCategoriesAsync();
         }
 
-        private static void GetNames()
+        private static async Task<dynamic> GetRandomName()
         {
-            new JsonFeed("https://www.names.privserv.com/api/", 0);
-            var result = JsonFeed.GetNames();
-            names = Tuple.Create(result.name.ToString(), result.surname.ToString());
+            var jsonFeed = new JsonFeed("https://www.names.privserv.com/api/");
+            var result = await jsonFeed.GetNames();
+            return Tuple.Create(result.name.ToString(), result.surname.ToString());
         }
     }
 }

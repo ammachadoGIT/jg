@@ -5,19 +5,18 @@ using Newtonsoft.Json;
 
 namespace JokeGenerator
 {
-    class JsonFeed
+    public class JsonFeed
     {
-        static string _url = string.Empty;
+        private readonly HttpClient client;
 
-        public JsonFeed(string endpoint, int results)
+        public JsonFeed(string endpoint)
         {
-            _url = endpoint;
+            this.client = new HttpClient { BaseAddress = new Uri(endpoint) };
         }
 
-        public static string[] GetRandomJokes(string firstname, string lastname, string category)
+        public async Task<string[]> GetRandomJokes(string firstname, string lastname, string category, int number)
         {
-            var client = new HttpClient { BaseAddress = new Uri(_url) };
-            var url = "jokes/random";
+            var url = $"jokes/random/{number}";
             if (category != null)
             {
                 if (url.Contains('?'))
@@ -29,39 +28,32 @@ namespace JokeGenerator
                     url += "?";
                 }
 
-                url += "category=";
-                url += category;
+                url += $"category={category}";
             }
 
-            var joke = Task.FromResult(client.GetStringAsync(url).Result).Result;
+            var jokes = await this.client.GetStringAsync(url);
 
             if (firstname != null && lastname != null)
             {
-                var index = joke.IndexOf("Chuck Norris");
-                var firstPart = joke.Substring(0, index);
-                var secondPart = joke.Substring(0 + index + "Chuck Norris".Length, joke.Length - (index + "Chuck Norris".Length));
-                joke = firstPart + " " + firstname + " " + lastname + secondPart;
+                var index = jokes.IndexOf("Chuck Norris", StringComparison.Ordinal);
+                var firstPart = jokes.Substring(0, index);
+                var secondPart = jokes.Substring(0 + index + "Chuck Norris".Length, jokes.Length - (index + "Chuck Norris".Length));
+                jokes = firstPart + " " + firstname + " " + lastname + secondPart;
             }
 
-            return new string[] { JsonConvert.DeserializeObject<dynamic>(joke).value };
+            return new string[] { JsonConvert.DeserializeObject<dynamic>(jokes).value };
         }
 
-        /// <summary>
-        /// returns an object that contains name and surname
-        /// </summary>
-        /// <returns></returns>
-        public static dynamic GetNames()
+        public async Task<dynamic> GetNames()
         {
-            var client = new HttpClient { BaseAddress = new Uri(_url) };
-            var result = client.GetStringAsync(string.Empty).Result;
+            var result = await this.client.GetStringAsync(string.Empty);
             return JsonConvert.DeserializeObject<dynamic>(result);
         }
 
-        public static string[] GetCategories()
+        public async Task<string[]> GetCategoriesAsync()
         {
-            var client = new HttpClient { BaseAddress = new Uri(_url) };
-
-            return new string[] { Task.FromResult(client.GetStringAsync("categories").Result).Result };
+            var result = await this.client.GetStringAsync("categories");
+            return new[] { result };
         }
     }
 }
